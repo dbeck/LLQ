@@ -24,12 +24,13 @@ namespace LLQ {
     buffer(int fd, size_t size, bool writable);
     ~buffer();
     size_t size() const;
+    size_t page_size() const;
     bool writable() const;
   };
 
   // implementation
-  buffer::buffer(int fd, size_t sz, bool wr) :
-    no_copy("deleted"),
+  buffer::buffer(int fd, size_t sz, bool wr)
+  : no_copy("deleted"),
     no_default_construct("deleted"),
     size_{sz},
     page_size_{0},
@@ -38,6 +39,10 @@ namespace LLQ {
   {
     if( fd < 0 )   throw std::invalid_argument{"fd is invalid"};
     if( sz == 0 )  throw std::invalid_argument{"size is zero"};
+    auto page_size = getpagesize();
+    if( page_size <= 0 ) throw std::runtime_error{"getpagesize() returns invalid value"};
+    page_size_ = page_size;
+    if( (sz % page_size_) != 0 ) throw std::invalid_argument{"size must be a multiple of page_size"};
 
     auto prot = writable_ ? (PROT_WRITE | PROT_READ) : PROT_READ;
     buffer_ = mmap(nullptr, sz, prot, MAP_SHARED, fd, 0);
@@ -47,6 +52,7 @@ namespace LLQ {
 
   buffer::~buffer() {}
   size_t buffer::size() const { return size_; }
+  size_t buffer::page_size() const { return page_size_; }
   bool buffer::writable() const { return writable_; }
 }
 
