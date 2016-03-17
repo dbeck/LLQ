@@ -33,6 +33,7 @@ namespace LLQ {
   };
 
   // implementation
+  
   shmem::shmem(const std::string & name, size_t sz, bool wr)
   : no_copy("deleted"),
     no_default_construct("deleted"),
@@ -40,23 +41,48 @@ namespace LLQ {
     size_{sz},
     writable_{wr}
   {
-    if( size_ == 0 ) throw std::invalid_argument{"size is zero"};
-    if( name.empty() ) throw std::invalid_argument{"name must be non-empty"};
+    if( size_ == 0 )        throw std::invalid_argument{"size is zero"};
+    if( name.empty() )      throw std::invalid_argument{"name must be non-empty"};
     if( name.at(0) != '/' ) throw std::invalid_argument{"name must start with '/'"};
+    
     if( name.find('/',1) != std::string::npos )
       throw std::invalid_argument{"only the first character should be '/'"};
 
     mode_t mode = S_IRUSR;
     int oflags  = O_RDONLY;
+    
+    bool needs_ftruncate = false;
 
     if( writable_ )
     {
-      mode   = S_IWUSR|S_IRUSR;
+      // try open in read-only mode first and determine if ftruncate will be needed or not
+      fd_ = ::shm_open(name.c_str(), oflags, mode);
+      if( fd_ < 0 )
+      {
+        // if the shared memory is not yet there, we will need to initialize it
+        needs_ftruncate = true;
+      }
+      else
+      {
+        ::close(fd_);
+        fd_ = -1;
+      }
+      
       oflags = O_CREAT|O_RDWR;
+      mode   = S_IWUSR|S_IRUSR;
     }
 
-    fd_ = shm_open(name.c_str(), oflags, mode);
-    if( fd_ < 0 ) throw std::runtime_error{"shm_open() failed"};
+    fd_ = ::shm_open(name.c_str(), oflags, mode);
+    if( fd_ < 0 )
+    {
+      throw std::runtime_error{"shm_open() failed"};
+    }
+    
+    // needs ftruncate to set the size and initialize the shared memory region
+    if( needs_ftruncate && ::ftruncate(fd_, size_) < 0 )
+    {
+      throw std::runtime_error{"ftruncate() failed"};
+    }
   }
 
   shmem::~shmem()

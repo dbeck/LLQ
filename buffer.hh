@@ -29,6 +29,7 @@ namespace LLQ {
   };
 
   // implementation
+  
   buffer::buffer(int fd, size_t sz, bool wr)
   : no_copy("deleted"),
     no_default_construct("deleted"),
@@ -37,20 +38,34 @@ namespace LLQ {
     writable_{wr},
     buffer_{nullptr}
   {
+    auto page_size = getpagesize();
+    page_size_ = page_size;
+    
     if( fd < 0 )   throw std::invalid_argument{"fd is invalid"};
     if( sz == 0 )  throw std::invalid_argument{"size is zero"};
-    auto page_size = getpagesize();
-    if( page_size <= 0 ) throw std::runtime_error{"getpagesize() returns invalid value"};
-    page_size_ = page_size;
-    if( (sz % page_size_) != 0 ) throw std::invalid_argument{"size must be a multiple of page_size"};
+    if( page_size_ <= 0 ) throw std::runtime_error{"getpagesize() returns invalid value"};
+    
+    if( (sz % page_size_) != 0 )
+      throw std::invalid_argument{"size must be a multiple of page_size"};
 
-    auto prot = writable_ ? (PROT_WRITE | PROT_READ) : PROT_READ;
-    buffer_ = mmap(nullptr, sz, prot, MAP_SHARED, fd, 0);
+    auto prot = writable_ ? (PROT_READ|PROT_WRITE) : PROT_READ;
+    
+    buffer_ = ::mmap(nullptr, size_, prot, MAP_SHARED, fd, 0);
 
-    if( buffer_ == MAP_FAILED ) throw std::runtime_error{"mmap failed"};
+    if( buffer_ == MAP_FAILED )
+    {
+      throw std::runtime_error{"mmap failed"};
+    }
   }
 
-  buffer::~buffer() {}
+  buffer::~buffer()
+  {
+    if( buffer_ && buffer_ != MAP_FAILED )
+    {
+      ::munmap(buffer_, size_);
+    }
+  }
+  
   size_t buffer::size() const { return size_; }
   size_t buffer::page_size() const { return page_size_; }
   bool buffer::writable() const { return writable_; }
