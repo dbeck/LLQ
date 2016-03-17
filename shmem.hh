@@ -29,6 +29,7 @@ namespace LLQ {
     size_t size() const;
     bool writable() const;
     int fd() const;
+    static bool destroy(const std::string & name);
   };
 
   // implementation
@@ -40,6 +41,7 @@ namespace LLQ {
     writable_{wr}
   {
     if( size_ == 0 ) throw std::invalid_argument{"size is zero"};
+    if( name.empty() ) throw std::invalid_argument{"name must be non-empty"};
     if( name.at(0) != '/' ) throw std::invalid_argument{"name must start with '/'"};
     if( name.find('/',1) != std::string::npos )
       throw std::invalid_argument{"only the first character should be '/'"};
@@ -66,6 +68,15 @@ namespace LLQ {
   size_t shmem::size() const { return size_; }
   bool shmem::writable() const { return writable_; }
   int shmem::fd() const { return fd_; }
+
+  bool shmem::destroy(const std::string & name)
+  {
+    if( name.empty() ) throw std::invalid_argument{"name must be non-empty"};
+    if( name.at(0) != '/' ) throw std::invalid_argument{"name must start with '/'"};
+    if( name.find('/',1) != std::string::npos )
+      throw std::invalid_argument{"only the first character should be '/'"};
+    return 0 == shm_unlink(name.c_str());
+  }
 }
 
 #endif /* end of include guard: LLQ_SHMEM_INCLUDED */
