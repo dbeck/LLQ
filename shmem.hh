@@ -1,11 +1,16 @@
 #ifndef LLQ_SHMEM_INCLUDED
 #define LLQ_SHMEM_INCLUDED
 
-#include <cstdint>
+// C
+#include <fcntl.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/posix_shm.h>
+
+// C++
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
@@ -35,8 +40,8 @@ namespace LLQ {
   // implementation
   
   shmem::shmem(const std::string & name, size_t sz, bool wr)
-  : no_copy("deleted"),
-    no_default_construct("deleted"),
+  : no_copy{"deleted"},
+    no_default_construct{"deleted"},
     name_{name},
     size_{sz},
     writable_{wr}
@@ -47,6 +52,9 @@ namespace LLQ {
     
     if( name.find('/',1) != std::string::npos )
       throw std::invalid_argument{"only the first character should be '/'"};
+    
+    if( name.size() > PSHMNAMLEN )
+      throw std::invalid_argument{"name is too long for shm_open"};
 
     mode_t mode = S_IRUSR;
     int oflags  = O_RDONLY;

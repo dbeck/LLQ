@@ -26,13 +26,14 @@ namespace LLQ {
     size_t size() const;
     size_t page_size() const;
     bool writable() const;
+    void * ptr();
   };
 
   // implementation
   
   buffer::buffer(int fd, size_t sz, bool wr)
-  : no_copy("deleted"),
-    no_default_construct("deleted"),
+  : no_copy{"deleted"},
+    no_default_construct{"deleted"},
     size_{sz},
     page_size_{0},
     writable_{wr},
@@ -47,6 +48,9 @@ namespace LLQ {
     
     if( (sz % page_size_) != 0 )
       throw std::invalid_argument{"size must be a multiple of page_size"};
+    
+    if( sz < (page_size_ * 2) )
+      throw std::invalid_argument{"size must be larger than two pages"};
 
     auto prot = writable_ ? (PROT_READ|PROT_WRITE) : PROT_READ;
     
@@ -69,6 +73,7 @@ namespace LLQ {
   size_t buffer::size() const { return size_; }
   size_t buffer::page_size() const { return page_size_; }
   bool buffer::writable() const { return writable_; }
+  void * buffer::ptr() { return buffer_; }
 }
 
 #endif /* end of include guard: LLQ_BUFFER_INCLUDED */
