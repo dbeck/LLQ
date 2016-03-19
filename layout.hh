@@ -89,6 +89,28 @@ namespace LLQ {
       }
     }
     
+    void add_nocheck(const void * ptr, size_t size)
+    {
+      int idx = (header_->seqno_)&1;
+      area & a = areas_[idx];
+      
+      header_->flags_[2*(a.act_item_)+idx] = size;
+      
+      ::memcpy( a.start_+a.act_pos_, ptr, size );
+      a.act_pos_ += size;
+      ++(a.act_item_);
+      header_->flags_[2*(a.act_item_)+idx] = 0;
+      
+      if( a.act_item_ == n_items_ )
+      {
+        ++(header_->seqno_);
+        idx           = (header_->seqno_)&1;
+        a             = areas_[idx];
+        a.act_item_  = 0;
+        a.act_pos_   = 0;
+      }
+    }
+    
   };
 
   // implementation
