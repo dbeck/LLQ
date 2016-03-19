@@ -1,20 +1,21 @@
 #ifndef LLQ_SHMEM_INCLUDED
 #define LLQ_SHMEM_INCLUDED
 
+// OS specifics
+#include "config.hh"
+
 // C
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <sys/posix_shm.h>
 
 // C++
 #include <cstdint>
 #include <stdexcept>
 #include <string>
 
-#include "config.hh"
 #include "no_copy.hh"
 #include "no_default_construct.hh"
 
@@ -53,7 +54,7 @@ namespace LLQ {
     if( name.find('/',1) != std::string::npos )
       throw std::invalid_argument{"only the first character should be '/'"};
     
-    if( name.size() > PSHMNAMLEN )
+    if( name.size() > SHMEM_NAME_MAX_LEN )
       throw std::invalid_argument{"name is too long for shm_open"};
 
     mode_t mode = S_IRUSR;
