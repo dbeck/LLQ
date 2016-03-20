@@ -18,7 +18,7 @@ namespace LLQ {
     size_t  size_;
     size_t  page_size_;
     bool    writable_;
-    void *  buffer_;
+    char *  buffer_;
 
   public:
     buffer(int fd, size_t size, bool writable);
@@ -26,11 +26,11 @@ namespace LLQ {
     size_t size() const;
     size_t page_size() const;
     bool writable() const;
-    void * ptr();
+    char * ptr();
   };
 
   // implementation
-  
+
   buffer::buffer(int fd, size_t sz, bool wr)
   : no_copy{"deleted"},
     no_default_construct{"deleted"},
@@ -41,20 +41,20 @@ namespace LLQ {
   {
     auto page_size = getpagesize();
     page_size_ = page_size;
-    
+
     if( fd < 0 )   throw std::invalid_argument{"fd is invalid"};
     if( sz == 0 )  throw std::invalid_argument{"size is zero"};
     if( page_size_ <= 0 ) throw std::runtime_error{"getpagesize() returns invalid value"};
-    
+
     if( (sz % page_size_) != 0 )
       throw std::invalid_argument{"size must be a multiple of page_size"};
-    
+
     if( sz < (page_size_ * 2) )
       throw std::invalid_argument{"size must be larger than two pages"};
 
     auto prot = writable_ ? (PROT_READ|PROT_WRITE) : PROT_READ;
-    
-    buffer_ = ::mmap(nullptr, size_, prot, MAP_SHARED, fd, 0);
+
+    buffer_ = (char *)::mmap(nullptr, size_, prot, MAP_SHARED, fd, 0);
 
     if( buffer_ == MAP_FAILED )
     {
@@ -69,11 +69,11 @@ namespace LLQ {
       ::munmap(buffer_, size_);
     }
   }
-  
+
   size_t buffer::size() const { return size_; }
   size_t buffer::page_size() const { return page_size_; }
   bool buffer::writable() const { return writable_; }
-  void * buffer::ptr() { return buffer_; }
+  char * buffer::ptr() { return buffer_; }
 }
 
 #endif /* end of include guard: LLQ_BUFFER_INCLUDED */

@@ -10,13 +10,9 @@
 #include "no_copy.hh"
 #include "no_default_construct.hh"
 #include "shmem.hh"
+#include "item.hh"
 
 namespace LLQ {
-
-  struct item {
-    char * data_;
-    size_t size_;
-  };
   
   template <typename DEV>
   class queue final : no_copy, no_default_construct
