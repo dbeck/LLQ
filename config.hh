@@ -2,6 +2,7 @@
 #define LLQ_CONFIG_INCLUDED
 
 #ifdef __APPLE__
+#include <sys/time.h>
 #include <sys/posix_shm.h>
 #define SHMEM_NAME_MAX_LEN PSHMNAMLEN 
 //
