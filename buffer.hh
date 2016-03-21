@@ -54,7 +54,7 @@ namespace LLQ {
 
     auto prot = writable_ ? (PROT_READ|PROT_WRITE) : PROT_READ;
 
-    buffer_ = (char *)::mmap(nullptr, size_, prot, MAP_SHARED, fd, 0);
+    buffer_ = (char *)::mmap(nullptr, size_, prot, MAP_SHARED|MAP_NOCACHE, fd, 0);
 
     if( buffer_ == MAP_FAILED )
     {
@@ -66,6 +66,7 @@ namespace LLQ {
   {
     if( buffer_ && buffer_ != MAP_FAILED )
     {
+      ::msync(buffer_, size_, MS_SYNC);
       ::munmap(buffer_, size_);
     }
   }
