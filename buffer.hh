@@ -54,7 +54,7 @@ namespace LLQ {
 
     auto prot = writable_ ? (PROT_READ|PROT_WRITE) : PROT_READ;
 
-    buffer_ = (char *)::mmap(nullptr, size_, prot, MAP_SHARED|MAP_NOCACHE, fd, 0);
+    buffer_ = (char *)::mmap(nullptr, size_, prot, LLQ_MMAP_FLAGS, fd, 0);
 
     if( buffer_ == MAP_FAILED )
     {

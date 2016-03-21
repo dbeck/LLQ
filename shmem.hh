@@ -54,7 +54,7 @@ namespace LLQ {
     if( name.find('/',1) != std::string::npos )
       throw std::invalid_argument{"only the first character should be '/'"};
     
-    if( name.size() > SHMEM_NAME_MAX_LEN )
+    if( name.size() > LLQ_SHMEM_NAME_MAX_LEN )
       throw std::invalid_argument{"name is too long for shm_open"};
 
     mode_t mode = S_IRUSR;
